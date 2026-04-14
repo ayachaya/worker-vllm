@@ -247,12 +247,20 @@ class OpenAIvLLMEngine(vLLMEngine):
         chat_template = None
         if self.tokenizer and hasattr(self.tokenizer, 'tokenizer'):
             chat_template = self.tokenizer.tokenizer.chat_template
-        
+
+        from vllm.entrypoints.openai.serving_render import OpenAIServingRender
+        self.render_engine = OpenAIServingRender(
+            engine_client=self.llm,
+            models=self.serving_models,
+            request_logger=None,
+        )
+
         self.chat_engine = OpenAIServingChat(
             engine_client=self.llm, 
             models=self.serving_models,
             response_role=self.response_role,
             request_logger=None,
+            openai_serving_render=self.render_engine,
             chat_template=chat_template,
             chat_template_content_format="auto",
             trust_request_chat_template=os.getenv('TRUST_REQUEST_CHAT_TEMPLATE', 'false').lower() == 'true',
