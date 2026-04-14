@@ -251,6 +251,7 @@ class OpenAIvLLMEngine(vLLMEngine):
         from vllm.entrypoints.serve.render.serving import OpenAIServingRender
 
         self.render_engine = OpenAIServingRender(
+            io_processor=self.llm.io_processor,
             model_config=self.llm.model_config,
             renderer=self.llm.renderer,
             model_registry=self.serving_models.registry,
