@@ -248,31 +248,35 @@ class OpenAIvLLMEngine(vLLMEngine):
         if self.tokenizer and hasattr(self.tokenizer, 'tokenizer'):
             chat_template = self.tokenizer.tokenizer.chat_template
 
-        from vllm.entrypoints.openai.serving_render import OpenAIServingRender
-        self.render_engine = OpenAIServingRender(
-            engine_client=self.llm,
-            models=self.serving_models,
-            request_logger=None,
-        )
+        from vllm.entrypoints.serve.render.serving import OpenAIServingRender
 
+        self.render_engine = OpenAIServingRender(
+            model_config=self.llm.model_config,
+            renderer=self.llm.renderer,
+            model_registry=self.serving_models.registry,
+            request_logger=None,
+            chat_template=chat_template,
+            chat_template_content_format=os.getenv('CHAT_TEMPLATE_CONTENT_FORMAT', 'auto'),
+            trust_request_chat_template=os.getenv('TRUST_REQUEST_CHAT_TEMPLATE', 'false').lower() == 'true',
+            enable_auto_tools=os.getenv('ENABLE_AUTO_TOOL_CHOICE', 'false').lower() == 'true',
+            exclude_tools_when_tool_choice_none=os.getenv('EXCLUDE_TOOLS_WHEN_TOOL_CHOICE_NONE', 'false').lower() == 'true',
+            tool_parser=os.getenv('TOOL_CALL_PARSER') or None,
+        )
+        
         self.chat_engine = OpenAIServingChat(
-            engine_client=self.llm, 
+            engine_client=self.llm,
             models=self.serving_models,
             response_role=self.response_role,
             request_logger=None,
             openai_serving_render=self.render_engine,
-            chat_template=chat_template,
-            chat_template_content_format="auto",
-            trust_request_chat_template=os.getenv('TRUST_REQUEST_CHAT_TEMPLATE', 'false').lower() == 'true',
+            # remove chat_template, tool-related args — they now live in render_engine
             return_tokens_as_token_ids=os.getenv('RETURN_TOKENS_AS_TOKEN_IDS', 'false').lower() == 'true',
-            reasoning_parser=os.getenv('REASONING_PARSER', "") or "",
-            enable_auto_tools=os.getenv('ENABLE_AUTO_TOOL_CHOICE', 'false').lower() == 'true',
-            exclude_tools_when_tool_choice_none=os.getenv('EXCLUDE_TOOLS_WHEN_TOOL_CHOICE_NONE', 'false').lower() == 'true',
-            tool_parser=os.getenv('TOOL_CALL_PARSER', "") or None,
+            reasoning_parser=os.getenv('REASONING_PARSER', '') or '',
             enable_prompt_tokens_details=os.getenv('ENABLE_PROMPT_TOKENS_DETAILS', 'false').lower() == 'true',
             enable_force_include_usage=os.getenv('ENABLE_FORCE_INCLUDE_USAGE', 'false').lower() == 'true',
             enable_log_outputs=os.getenv('ENABLE_LOG_OUTPUTS', 'false').lower() == 'true'
         )
+        
         self.completion_engine = OpenAIServingCompletion(
             engine_client=self.llm,
             models=self.serving_models,
