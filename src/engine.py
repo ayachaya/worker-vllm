@@ -290,7 +290,10 @@ class OpenAIvLLMEngine(vLLMEngine):
         )
 
         if hasattr(self.chat_engine, 'warmup'):
-            await self.chat_engine.warmup()
+            import inspect
+            result = self.chat_engine.warmup()
+            if inspect.isawaitable(result):
+                await result
 
     async def generate(self, openai_request: JobInput):
         # Ensure engines are ready (no-op if already initialized at startup)
