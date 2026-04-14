@@ -270,7 +270,8 @@ class OpenAIvLLMEngine(vLLMEngine):
             response_role=self.response_role,
             request_logger=None,
             openai_serving_render=self.render_engine,
-            # remove chat_template, tool-related args — they now live in render_engine
+            chat_template=chat_template,
+            chat_template_content_format=os.getenv('CHAT_TEMPLATE_CONTENT_FORMAT', 'auto'),
             return_tokens_as_token_ids=os.getenv('RETURN_TOKENS_AS_TOKEN_IDS', 'false').lower() == 'true',
             reasoning_parser=os.getenv('REASONING_PARSER', '') or '',
             enable_prompt_tokens_details=os.getenv('ENABLE_PROMPT_TOKENS_DETAILS', 'false').lower() == 'true',
